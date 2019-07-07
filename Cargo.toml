@@ -1,0 +1,39 @@
+[package]
+# ...
+name = "aespresso"
+version = "0.1.0"
+authors = ["Rootyjr <41842051+Rootyjr@users.noreply.github.com>"]
+edition = "2018"
+
+# A short blurb about the package. This is not rendered in any format when
+# uploaded to crates.io (aka this is not markdown).
+description = "A Gtk3 frontend for archlinux's archlinux-java script. Must have gtk3 and lxqt-sudo installed."
+
+# These URLs point to more information about the package. These are
+# intended to be webviews of the relevant data, not necessarily compatible
+# with VCS tools and the like.
+repository = "https://github.com/Rootyjr/aespresso"
+
+# This points to a file under the package root (relative to this `Cargo.toml`).
+# The contents of this file are stored and indexed in the registry.
+# crates.io will render this file and place the result on the crate's page.
+
+keywords = ["archlinux", "gui", "gtk", "settings", "java"]
+categories = []
+license = "BSD-2-Clause"
+
+[dependencies]
+os_type="2.2"
+
+[dependencies.gtk]
+version = "0.7.0"
+features = ["v3_16"]
+
+[dependencies.gio]
+version = "0.7.0"
+features = ["v2_44"]
+
+[badges]
+is-it-maintained-issue-resolution = { repository = "Rootyjr/aespresso" }
+is-it-maintained-open-issues = { repository = "Rootyjr/aespresso" }
+maintenance = { status = "passively-maintained" }

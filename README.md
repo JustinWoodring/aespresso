@@ -5,4 +5,4 @@ Installation:
 
 AUR package coming soon...
 
-![aespresso screenshot](https://github.com/Rootyjr/aespresso/blob/master/aespresso.png)
+![aespresso screenshot](https://github.com/Rootyjr/aespresso/blob/master/aespresso-screenshot.png)

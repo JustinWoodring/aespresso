@@ -9,6 +9,6 @@ The AUR package is here: [aespresso](https://aur.archlinux.org/packages/aespress
 
 Use the application menu. Wait, sorry you're an Arch user so you probably don't use those. ; )
 
-For my Arch comrades faster with a terminal than an application menu: `aespresso`
+For my fellow Archers faster with a terminal than an application menu: `aespresso`
 
 ![aespresso screenshot](https://github.com/Rootyjr/aespresso/blob/master/aespresso-screenshot.png)

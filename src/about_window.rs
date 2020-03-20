@@ -17,8 +17,8 @@ pub fn new(app : &Application, app_data : &AppData) -> ApplicationWindow{
 	let about_window_clone3 = about_window.clone();
 	//Do not destroy window only hide it.
 	about_window_clone.connect_delete_event(move |_, _| {
-			about_window_clone2.hide();
-			Inhibit(true)
+		about_window_clone2.hide();
+		Inhibit(true)
 	});
 	let about_box = Box::new(Vertical,10);
 	let details_box = Box::new(Vertical,10);

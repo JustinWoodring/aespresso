@@ -12,16 +12,16 @@ pub struct AppData{
 pub fn get_app_data() -> AppData{
 	const APP_DATA : AppData = AppData{
 		title: "aespresso",
-		gtk_path: "com.rootyjr.aespresso",
+		gtk_path: "com.booglejr.aespresso",
 		version: "0.1.0",
-		authors: "Rootyjr",
-		repo: ("https://github.com/Rootyjr/aespresso", "Git Repository"),
+		authors: "Boogeljr",
+		repo: ("https://github.com/Booglejr/aespresso", "Git Repository"),
 		license: "aespresso:
 ------------------------------------------------------------------------------
 
 BSD 2-Clause License
 
-Copyright (c) 2019, Rootyjr
+Copyright (c) 2019, Booglejr
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without

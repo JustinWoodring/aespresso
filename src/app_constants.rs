@@ -13,7 +13,7 @@ pub fn get_app_data() -> AppData{
 	const APP_DATA : AppData = AppData{
 		title: "aespresso",
 		gtk_path: "com.booglejr.aespresso",
-		version: "0.1.0",
+		version: "0.1.1",
 		authors: "Booglejr",
 		repo: ("https://github.com/Booglejr/aespresso", "Git Repository"),
 		license: "aespresso:

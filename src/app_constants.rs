@@ -14,14 +14,14 @@ pub fn get_app_data() -> AppData{
 		title: "aespresso",
 		gtk_path: "com.booglejr.aespresso",
 		version: "0.1.0",
-		authors: "Boogeljr",
+		authors: "Booglejr",
 		repo: ("https://github.com/Booglejr/aespresso", "Git Repository"),
 		license: "aespresso:
 ------------------------------------------------------------------------------
 
 BSD 2-Clause License
 
-Copyright (c) 2019, Booglejr
+Copyright (c) 2019-2020, Booglejr
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without

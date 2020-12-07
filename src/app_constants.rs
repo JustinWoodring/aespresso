@@ -1,22 +1,22 @@
 use std::vec::Vec;
 
-pub struct AppData{
-	pub title: &'static str,
-	pub gtk_path: &'static str,
-	pub version: &'static str,
-	pub authors: &'static str,
-	pub repo: (&'static str, &'static str),
-	pub license: &'static str,
+pub struct AppData {
+    pub title: &'static str,
+    pub gtk_path: &'static str,
+    pub version: &'static str,
+    pub authors: &'static str,
+    pub repo: (&'static str, &'static str),
+    pub license: &'static str,
 }
 
-pub fn get_app_data() -> AppData{
-	const APP_DATA : AppData = AppData{
-		title: "aespresso",
-		gtk_path: "com.rootyjr.aespresso",
-		version: "0.1.1",
-		authors: "Booglejr",
-		repo: ("https://github.com/Booglejr/aespresso", "Git Repository"),
-		license: "aespresso:
+pub fn get_app_data() -> AppData {
+    const APP_DATA: AppData = AppData {
+        title: "aespresso",
+        gtk_path: "com.booglejr.aespresso",
+        version: "0.1.2",
+        authors: "Booglejr",
+        repo: ("https://github.com/Booglejr/aespresso", "Git Repository"),
+        license: "aespresso:
 ------------------------------------------------------------------------------
 
 BSD 2-Clause License
@@ -116,38 +116,47 @@ gio:
 	LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 	SOFTWARE.",
-	};
-	return APP_DATA;
+    };
+    return APP_DATA;
 }
 
 #[derive(Clone)]
-pub struct ErrMsg{
-	pub e : Vec<String>,
+pub struct ErrMsg {
+    pub e: Vec<String>,
 }
 
-impl ErrMsg{
-	pub fn new() -> ErrMsg{
-		ErrMsg{
-			e : Vec::new(),
-		}
-	}
-	pub fn init(&mut self) {	
-		self.e.push(
-"(0) Arch Linux was not detected.
+impl ErrMsg {
+    pub fn new() -> ErrMsg {
+        ErrMsg { e: Vec::new() }
+    }
+    pub fn init(&mut self) {
+        self.e.push(
+            "(0) Arch Linux or Manjaro were not detected.
 		
-If your operating system is Arch Linux,
-then please open an issue about this.".to_string()
-		);
-		
-		self.e.push(
-"(1) Could not run lxqt-sudo. Please ensure that it is installed on your system.".to_string()
-		);
-	}
-	pub fn get_err(&self, number : usize) -> &str {
-		let returned : Option<&String> = self.e.get(number);
-		match returned {
-			Some(text) => {return text;}
-			None => {return "(-1) Error not found.";}
-		}
-	}
+If your operating system is Arch Linux or Manjaro,
+then please open an issue about this."
+                .to_string(),
+        );
+
+        self.e.push(
+            "(1) Could not run lxqt-sudo. Please ensure that it is installed on your system."
+                .to_string(),
+        );
+
+        self.e.push(
+            "(2) Could not run archlinux-java. Please ensure that it is installed on your system."
+                .to_string(),
+        );
+    }
+    pub fn get_err(&self, number: usize) -> &str {
+        let returned: Option<&String> = self.e.get(number);
+        match returned {
+            Some(text) => {
+                return text;
+            }
+            None => {
+                return "(-1) Error not found.";
+            }
+        }
+    }
 }

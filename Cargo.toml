@@ -1,7 +1,7 @@
 [package]
 # ...
 name = "aespresso"
-version = "0.1.0"
+version = "0.1.2"
 authors = ["Rootyjr <41842051+Rootyjr@users.noreply.github.com>"]
 edition = "2018"
 
@@ -23,17 +23,17 @@ categories = []
 license = "BSD-2-Clause"
 
 [dependencies]
-os_type="2.2"
+os_info = "3.0.1"
 
 [dependencies.gtk]
-version = "0.7.0"
+version = "0.9.0"
 features = ["v3_16"]
 
 [dependencies.gio]
-version = "0.7.0"
+version = ""
 features = ["v2_44"]
 
 [badges]
-is-it-maintained-issue-resolution = { repository = "Rootyjr/aespresso" }
-is-it-maintained-open-issues = { repository = "Rootyjr/aespresso" }
+is-it-maintained-issue-resolution = { repository = "Booglejr/aespresso" }
+is-it-maintained-open-issues = { repository = "Booglejr/aespresso" }
 maintenance = { status = "passively-maintained" }

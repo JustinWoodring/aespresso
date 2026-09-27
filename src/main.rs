@@ -123,13 +123,18 @@ fn build_ui(app: &Application) {
     window.set_child(Some(&root));
 
     match util::detect_os_id().as_deref() {
-        Some("arch") | Some("manjaro") => {}
-        _ => util::show_message(
-            Some(&window),
-            MessageType::Warning,
-            ERR_UNSUPPORTED,
-            Some((ISSUE_URL, "Report an issue?")),
-        ),
+        Some("arch" | "manjaro" | "artix" | "endeavouros") => {}
+        other => {
+            if let Some(id) = other {
+                eprintln!("unsupported distribution: {id}");
+            }
+            util::show_message(
+                Some(&window),
+                MessageType::Warning,
+                ERR_UNSUPPORTED,
+                Some((ISSUE_URL, "Report an issue?")),
+            )
+        }
     }
 
     util::refresh_env(&window, &env_list);

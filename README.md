@@ -1,5 +1,5 @@
 # aespresso
-A GTK4 frontend for Arch Linux's `archlinux-java` script.
+A GTK4 frontend for Arch Linux's `archlinux-java` script. Also supports Artix Linux, Manjaro, and EndeavourOS.
 
 ### Installation:
 

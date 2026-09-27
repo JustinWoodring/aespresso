@@ -1,7 +1,7 @@
 [package]
 name = "aespresso"
 version = "0.2.0"
-authors = ["Justin Woodring", "Rootyjr <41842051+Rootyjr@users.noreply.github.com>"]
+authors = ["Justin Woodring <jwoodrg@gmail.com>"]
 edition = "2024"
 rust-version = "1.85"
 description = "A GTK4 frontend for Arch Linux's archlinux-java script. Requires polkit (pkexec) or lxqt-sudo."

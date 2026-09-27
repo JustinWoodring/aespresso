@@ -1,157 +1,175 @@
-use gio::prelude::*;
+//! Helpers for shelling out to `archlinux-java`, refreshing the environment
+//! list, and showing message dialogs.
+
+use gtk::gio;
+use gtk::glib;
+use gtk::glib::object::IsA;
 use gtk::prelude::*;
-use gtk::ResponseType;
-use gtk::{Application, Dialog, DialogFlags, Label, LinkButton, ListBox, ListBoxRow, Window};
-use std::cell::RefCell;
+use gtk::{
+    ButtonsType, Label, LinkButton, ListBox, ListBoxRow, MessageDialog, MessageType, Window,
+};
+use std::path::PathBuf;
 use std::process::Command;
-use std::rc::Rc;
 
-pub fn refresh_env(
-    app: &Application,
-    err_msg: crate::app_constants::ErrMsg,
-    listbox: &ListBox,
-    list: &Rc<RefCell<Vec<ListBoxRow>>>,
-) {
-    //Loop through object list and remove objects from the ListBox.
-    for x in 0..list.borrow().len() {
-        listbox.remove(&list.borrow()[x]);
-    }
+use crate::app_constants as app;
 
-    //Empty our list.
-    list.borrow_mut().clear();
-
-    //Build command to get data from the console.
-    let list_fetch = Command::new("archlinux-java").arg("status").output();
-
-    let mut output = String::new();
-
-    match list_fetch {
-        Ok(result) => {
-            //Remove unwanted text parts from output.
-            output = String::from_utf8(result.stdout)
-                .unwrap()
-                .replace("Available Java environments:\n", "")
-                .replace("  ", "")
-                .replace("No Java environment set as default", "")
-                .replace("No compatible Java environment installed", "");
-        }
-        Err(_text) => {
-            show_message(&app, Err(err_msg.get_err(2)), None);
-        }
-    }
-
-    /*Split output on the \n to a list of options. Loop through
-    and create corresponding ListBoxRows with child elements of Labels
-    containing the option and append these to the list.*/
-    for x in output.split("\n") {
-        let label = Label::new(Some(x));
-        let element = ListBoxRow::new();
-        element.add(&label);
-        list.borrow_mut().push(element);
-    }
-    //Remove one element to account for the last \n.
-    list.borrow_mut().pop();
-
-    /*add let no_env = Label::new(Some("No Java Environments Found"));*/
-
-    //Loop through the list and add the object into the ListBox.
-    for x in 0..list.borrow().len() {
-        listbox.add(&list.borrow()[x]);
-        list.borrow()[x].show();
-        list.borrow()[x]
-            .get_child()
-            .unwrap()
-            .downcast::<Label>()
-            .unwrap()
-            .show();
-    }
+/// A Java environment as reported by `archlinux-java status`.
+pub struct JavaEnv {
+    pub name: String,
+    pub is_default: bool,
 }
 
-pub fn show_message(
-    app: &Application,
-    message: Result<&str, &str>,
-    uri: Option<(&str, Option<&str>)>,
-) {
-    match message {
-        Ok(text) => {
-            let dialog = Dialog::with_buttons(
-                Some("Info"),
-                None::<&Window>,
-                DialogFlags::MODAL,
-                &[("Ok", ResponseType::Ok)],
-            );
-            dialog.set_default_size(400, 100);
-            dialog.set_resizable(false);
-            let label = Label::new(None);
-            label.set_markup(&("<b>Info: </b>".to_string() + &text.to_string()));
-            label.set_line_wrap(true);
-            dialog.get_content_area().add(&label);
-            if let Some((uri, name)) = uri {
-                if let Some(text) = name {
-                    let link = LinkButton::with_label(uri, Some(text));
-                    dialog.get_content_area().add(&link);
-                } else {
-                    let link = LinkButton::new(uri);
-                    dialog.get_content_area().add(&link);
-                }
-            }
-            dialog.set_border_width(10);
-            let app_quit2 = app.clone();
-            dialog.show_all();
-            let response = dialog.run();
-            match response {
-                ResponseType::Ok => {
-                    dialog.close();
-                }
-                _ => {
-                    dialog.close();
-                    app_quit2.quit();
-                }
-            }
-        }
-        Err(text) => {
-            let dialog = Dialog::with_buttons(
-                Some("Error"),
-                None::<&Window>,
-                DialogFlags::MODAL,
-                &[("Ok", ResponseType::Close)],
-            );
-            dialog.set_default_size(400, 100);
-            dialog.set_resizable(false);
-            let label = Label::new(None);
-            label.set_markup(&("<b>Error: </b>".to_string() + &text.to_string()));
-            label.set_line_wrap(true);
-            dialog.get_content_area().add(&label);
-            if let Some((uri, name)) = uri {
-                if let Some(text) = name {
-                    let link = LinkButton::with_label(uri, Some(text));
-                    dialog.get_content_area().add(&link);
-                } else {
-                    let link = LinkButton::new(uri);
-                    dialog.get_content_area().add(&link);
-                }
-            }
-            dialog.set_border_width(10);
-            let dialog_clone = dialog.clone();
-            let app_quit = app.clone();
-            let app_quit2 = app.clone();
-            let app_quit3 = app.clone();
-            dialog_clone.connect_delete_event(move |_, _| {
-                app_quit.quit();
-                Inhibit(false)
-            });
-            dialog.show_all();
-            let response = dialog.run();
-            match response {
-                ResponseType::Close => {
-                    dialog.close();
-                    app_quit2.quit();
-                }
-                _ => {
-                    dialog.close();
-                    app_quit3.quit();
-                }
-            }
-        }
+/// Name of a Java environment, or the exact text of an error to show.
+type JavaStatus = Result<Vec<JavaEnv>, String>;
+
+fn find_in_path(program: &str) -> Option<PathBuf> {
+    std::env::var_os("PATH").and_then(|path| {
+        std::env::split_paths(&path)
+            .map(|dir| dir.join(program))
+            .find(|candidate| candidate.is_file())
+    })
+}
+
+/// Pick a privilege escalation helper. `pkexec` (polkit) is the standard on
+/// modern desktops; `lxqt-sudo` is kept as a fallback for existing setups.
+fn sudo_program() -> Option<&'static str> {
+    ["pkexec", "lxqt-sudo"].into_iter().find(|p| find_in_path(p).is_some())
+}
+
+/// `archlinux-java status`, parsed into environments. The `(default)` marker
+/// is split off into [`JavaEnv::is_default`].
+fn java_status() -> JavaStatus {
+    let output = Command::new("archlinux-java")
+        .arg("status")
+        .output()
+        .map_err(|_| app::ERR_NO_JAVA.to_string())?;
+
+    Ok(String::from_utf8_lossy(&output.stdout)
+        .lines()
+        .map(str::trim)
+        .filter(|line| line.starts_with("java-"))
+        .map(|line| match line.strip_suffix(" (default)") {
+            Some(name) => JavaEnv { name: name.to_string(), is_default: true },
+            None => JavaEnv { name: line.to_string(), is_default: false },
+        })
+        .collect())
+}
+
+/// Run `archlinux-java <args>` through a privilege escalation helper.
+fn run_privileged(java_args: &[String]) -> Result<(), String> {
+    let sudo = sudo_program().ok_or(app::ERR_NO_SUDO)?;
+    let mut command = Command::new(sudo);
+    if sudo == "lxqt-sudo" {
+        command.arg("-s");
     }
+    let output = command
+        .arg("archlinux-java")
+        .args(java_args)
+        .output()
+        .map_err(|_| app::ERR_NO_SUDO.to_string())?;
+
+    // An empty stderr with a non-zero status (e.g. a cancelled pkexec
+    // prompt) is not worth an error dialog; anything else is.
+    if !output.status.success() && !output.stderr.is_empty() {
+        return Err(String::from_utf8_lossy(&output.stderr).trim().to_string());
+    }
+    Ok(())
+}
+
+/// Show a message dialog. Safe to call from any UI context; blocks nothing.
+pub fn show_message<W: IsA<Window>>(
+    parent: Option<&W>,
+    message_type: MessageType,
+    text: &str,
+    link: Option<(&str, &str)>,
+) {
+    let dialog = MessageDialog::builder()
+        .message_type(message_type)
+        .buttons(ButtonsType::Ok)
+        .text(text)
+        .modal(true)
+        .build();
+    if let Some(parent) = parent {
+        dialog.set_transient_for(Some(parent));
+    }
+    if let Some((uri, label)) = link {
+        dialog.content_area().append(&LinkButton::with_label(uri, label));
+    }
+    dialog.connect_response(|dialog, _| dialog.destroy());
+    dialog.present();
+}
+
+/// The environment name of the current selection, without the `(default)`
+/// suffix, ready to pass to `archlinux-java set`.
+pub fn selected_env(listbox: &ListBox) -> Option<String> {
+    let row = listbox.selected_row()?;
+    let label = row.child()?.downcast::<Label>().ok()?;
+    Some(label.label().trim_end_matches(" (default)").to_string())
+}
+
+/// Run a closure on a background thread and await its result on the main
+/// loop, keeping the UI responsive.
+async fn on_blocking_thread<T: Send + 'static>(f: impl FnOnce() -> T + Send + 'static) -> T {
+    gio::spawn_blocking(f)
+        .await
+        .expect("background task panicked")
+}
+
+/// Repopulate the list from `archlinux-java status`, running the command on a
+/// background thread so the UI never blocks.
+pub fn refresh_env<W: IsA<Window>>(window: &W, listbox: &ListBox) {
+    while let Some(child) = listbox.first_child() {
+        listbox.remove(&child);
+    }
+
+    let window = window.clone();
+    let listbox = listbox.clone();
+    glib::spawn_future_local(async move {
+        match on_blocking_thread(java_status).await {
+            Ok(envs) => {
+                for env in envs {
+                    let text = if env.is_default {
+                        format!("{} (default)", env.name)
+                    } else {
+                        env.name
+                    };
+                    let row = ListBoxRow::new();
+                    row.set_child(Some(&Label::new(Some(&text))));
+                    listbox.append(&row);
+                }
+            }
+            Err(message) => show_message(Some(&window), MessageType::Error, &message, None),
+        }
+    });
+}
+
+/// Run a privileged `archlinux-java` subcommand, then refresh the list. The
+/// window is made insensitive while the command runs so actions can't pile up.
+pub fn run_java_action<W: IsA<Window> + IsA<gtk::Widget>>(
+    window: &W,
+    listbox: &ListBox,
+    java_args: &[&str],
+) {
+    window.set_sensitive(false);
+    let java_args: Vec<String> = java_args.iter().map(|s| s.to_string()).collect();
+
+    let window = window.clone();
+    let listbox = listbox.clone();
+    glib::spawn_future_local(async move {
+        let result = on_blocking_thread(move || run_privileged(&java_args)).await;
+        window.set_sensitive(true);
+        if let Err(message) = result {
+            show_message(Some(&window), MessageType::Error, &message, None);
+        }
+        refresh_env(&window, &listbox);
+    });
+}
+
+/// Distribution identifier from `/etc/os-release`, if readable.
+pub fn detect_os_id() -> Option<String> {
+    std::fs::read_to_string("/etc/os-release").ok().and_then(|content| {
+        content.lines().find_map(|line| {
+            line.strip_prefix("ID=").map(|id| id.trim_matches('"').to_string())
+        })
+    })
 }
